@@ -5,16 +5,53 @@ use chrono::{ DateTime, Utc };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ModelConfig {
-    pub name: String,
-    pub model_path: PathBuf,
-    pub model_type: ModelType,
-    pub model_kind: String, // e.g. "Qwen", "LLaMA", smolVLM
-    pub model_url: Option<String>,
-    pub download_if_not_exist: bool,
+    pub model_config: ModelSpecificConfig,
     pub memory_config: ModelMemoryConfig,
     pub prompt_template: PromptTemplate,
     pub defaults: ModelDefaults,
     pub server_config: ServerConfig,
+}
+
+impl Default for ModelConfig {
+    fn default() -> Self {
+        Self {
+            model_config: ModelSpecificConfig {
+                name: "default".to_string(),
+                model_path: PathBuf::new(),
+                model_type: ModelType::Custom("default".to_string()),
+                model_kind: "default".to_string(),
+                model_url: None,
+                download_if_not_exist: false,
+            },
+            memory_config: ModelMemoryConfig {
+                min_ram_gb: 0.0,
+                recommended_ram_gb: 0.0,
+                gpu_memory_gb: None,
+            },
+            prompt_template: PromptTemplate {
+                template: "".to_string(),
+                required_keys: vec![],
+            },
+            defaults: ModelDefaults {
+                temperature: 0.0,
+                top_p: 0.0,
+                top_k: 0,
+                max_tokens: 0,
+                repetition_penalty: 0.0,
+            },
+            server_config: ServerConfig::default(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ModelSpecificConfig {
+    pub name: String,
+    pub model_path: PathBuf,
+    pub model_type: ModelType,
+    pub model_kind: String,
+    pub model_url: Option<String>,
+    pub download_if_not_exist: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

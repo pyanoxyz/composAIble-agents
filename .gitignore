@@ -1,5 +1,4 @@
 target/
-models/
 Cargo.lock
 .DS_Store
 .env

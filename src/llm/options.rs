@@ -12,7 +12,7 @@ pub struct LLMServerOptions {
 
 #[derive(Clone)]
 pub struct LLMHTTPCallOptions {
-    pub max_tokens: Option<u32>,
+    pub max_tokens: Option<usize>,
     pub temperature: Option<f32>,
     pub stop_words: Option<Vec<String>>,
     pub top_k: Option<usize>,
@@ -23,6 +23,7 @@ pub struct LLMHTTPCallOptions {
     pub repetition_penalty: Option<f32>,
     pub server_url: Option<String>,
     pub prompt_template: Option<String>,
+    pub port: Option<u16>,
     initialized_fields: Vec<String>,
 }
 
@@ -40,6 +41,7 @@ impl Default for LLMHTTPCallOptions {
             repetition_penalty: None,
             server_url: None,
             prompt_template: None,
+            port: None,
             initialized_fields: Vec::new(),
         }
     }
@@ -50,7 +52,7 @@ impl LLMHTTPCallOptions {
         LLMHTTPCallOptions::default()
     }
 
-    pub fn with_max_tokens(mut self, max_tokens: u32) -> Self {
+    pub fn with_max_tokens(mut self, max_tokens: usize) -> Self {
         self.max_tokens = Some(max_tokens);
         self.initialized_fields.push("max_tokens".to_string());
         self
@@ -110,6 +112,14 @@ impl LLMHTTPCallOptions {
         self
     }
 
+    pub fn with_port(mut self, port: u16) -> Self {
+        let server_url = format!("http://localhost:{}", port);
+        self.server_url = Some(server_url);
+        self.port = Some(port);
+        self.initialized_fields.push("server_url".to_string());
+        self
+    }
+
     pub fn with_prompt_template(mut self, prompt_template: String) -> Self {
         self.prompt_template = Some(prompt_template);
         self.initialized_fields.push("prompt_template".to_string());
@@ -148,8 +158,11 @@ impl LLMHTTPCallOptions {
             self.repetition_penalty = defaults.repetition_penalty;
         }
 
-        if !self.initialized_fields.contains(&"server_url".to_string()) {
-            panic!("server_url must be provided before calling build()");
+        if
+            !self.initialized_fields.contains(&"server_url".to_string()) &&
+            !self.initialized_fields.contains(&"port".to_string())
+        {
+            panic!("server_url or port must be provided before calling build()");
         }
 
         if !self.initialized_fields.contains(&"prompt_template".to_string()) {

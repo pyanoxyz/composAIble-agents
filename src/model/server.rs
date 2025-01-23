@@ -11,6 +11,7 @@ use axum::{
 use std::net::SocketAddr;
 use tokio::net::TcpListener;
 use serde_json::json;
+use crate::model::state::ModelState;
 
 use crate::model::error::{ ModelError, ModelResult };
 use super::{ ModelConfig, ModelManager };
@@ -29,7 +30,7 @@ impl ModelManagerServer {
             .route("/models/load", post(Self::handle_load_model))
             .route("/models/unload", post(Self::handle_unload_model))
             .route("/models/status/:name", get(Self::handle_get_status))
-            .route("/models/list", get(Self::handle_list_models))
+            // .route("/models/list", get(Self::handle_list_models))
             .with_state(self.manager);
 
         println!("Model Manager server starting on {}", addr);
@@ -52,7 +53,7 @@ impl ModelManagerServer {
         State(manager): State<Arc<ModelManager>>,
         Json(config): Json<ModelConfig>
     ) -> impl IntoResponse {
-        match manager.load_model(config).await {
+        match manager.load_model(ModelState::new(config)).await {
             Ok(()) => (StatusCode::OK, Json(())).into_response(),
             Err(e) =>
                 (
@@ -90,14 +91,14 @@ impl ModelManagerServer {
         }
     }
 
-    async fn handle_list_models(State(manager): State<Arc<ModelManager>>) -> impl IntoResponse {
-        match manager.list_models().await {
-            Ok(models) => (StatusCode::OK, Json(models)).into_response(),
-            Err(e) =>
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(json!({ "error": e.to_string() })),
-                ).into_response(),
-        }
-    }
+    // async fn handle_list_models(State(manager): State<Arc<ModelManager>>) -> impl IntoResponse {
+    //     match manager.list_models().await {
+    //         Ok(models) => (StatusCode::OK, Json(models)).into_response(),
+    //         Err(e) =>
+    //             (
+    //                 StatusCode::INTERNAL_SERVER_ERROR,
+    //                 Json(json!({ "error": e.to_string() })),
+    //             ).into_response(),
+    //     }
+    // }
 }

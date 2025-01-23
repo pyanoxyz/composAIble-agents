@@ -2,6 +2,7 @@ use crate::llm::llm_builder::LLM;
 use super::agent::Agent;
 use crate::tools::Tool;
 use std::sync::Arc;
+use log::info;
 pub struct AgentBuilder {
     system_prompt: Option<String>,
     user_prompt: Option<String>,
@@ -63,6 +64,8 @@ impl AgentBuilder {
         if self.system_prompt.is_none() {
             panic!("System prompt must be provided before building the Agent");
         }
+
+        info!("Agent built successfully");
 
         Agent {
             system_prompt: self.system_prompt,

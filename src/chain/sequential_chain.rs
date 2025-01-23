@@ -1,5 +1,5 @@
 use std::error::Error as StdError;
-use log::info;
+use log::{ info, error };
 
 use crate::agent::agent_trait::AgentTrait;
 use std::sync::{ Arc, Mutex };
@@ -43,6 +43,7 @@ impl Chain {
 
     pub fn add_agent(mut self, agent: Arc<Mutex<dyn AgentTrait>>) -> Self {
         self.agents.push(agent);
+        info!("Added agent");
         self
     }
 
@@ -62,7 +63,18 @@ impl Chain {
 
             // Get the current user prompt and execute the agent
             let user_input = agent.user_prompt().cloned().unwrap_or_default();
-            let output = agent.invoke().await?;
+            info!("agent invoked");
+            let output = match agent.invoke().await {
+                Ok(output) => {
+                    // Process output
+                    previous_output = Some(output.clone());
+                    output
+                }
+                Err(e) => {
+                    error!("Agent {} failed: {}", agent.name().cloned().unwrap_or_default(), e);
+                    return Err(e);
+                }
+            };
 
             // Store in memory log
             {
