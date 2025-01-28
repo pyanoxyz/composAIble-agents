@@ -1,0 +1,37 @@
+{
+  "model_config": {
+    "name": "deepseek-R1-7B",
+    "model_type": "Text",
+    "model_kind": "Qwen",
+    "model_path": "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf",
+    "model_url": "https://huggingface.co/bartowski/DeepSeek-R1-Distill-Qwen-7B-GGUF/resolve/main/DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf",
+    "download_if_not_exist": true
+  },
+  "memory_config": {
+    "min_ram_gb": 2.0,
+    "recommended_ram_gb": 7.0,
+    "gpu_memory_gb": 7.0
+  },
+  "prompt_template": {
+    "template": "<｜begin▁of▁sentence｜>{system_prompt}<｜User｜>{prompt}<｜Assistant｜><｜end▁of▁sentence｜><｜Assistant｜>",
+    "required_keys": ["system_prompt", "user_prompt"]
+  },
+  "defaults": {
+    "temperature": 0.7,
+    "top_p": 0.9,
+    "top_k": 40,
+    "max_tokens": 1048,
+    "repetition_penalty": 1.1
+  },
+  "server_config": {
+    "host": "localhost",
+    "port": 5009,
+    "ctx_size": 8096,
+    "gpu_layers": -1,
+    "batch_size": 512,
+    "num_threads": 16,
+    "use_mmap": true,
+    "use_gpu": true,
+    "extra_args": {}
+  }
+}

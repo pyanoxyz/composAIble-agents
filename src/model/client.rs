@@ -26,13 +26,13 @@ impl ModelManagerClient {
 
 #[async_trait]
 impl ModelManagerInterface for ModelManagerClient {
-    async fn load_model(&self, state: ModelState) -> ModelResult<()> {
-        let url = format!("{}/models/load", self.base_url);
+    async fn load_model(&self, _state: ModelState) -> ModelResult<()> {
+        let _url = format!("{}/models/load", self.base_url);
         // let _ = self.client.post(&url).json(&config).send().await?.error_for_status();
         Ok(())
     }
 
-    async fn load_model_by_name(&self, name: &str) -> ModelResult<()> {
+    async fn load_model_by_name(&self, _name: &str) -> ModelResult<()> {
         // todo
         Ok(())
     }
@@ -91,8 +91,8 @@ impl ModelManagerInterface for ModelManagerClient {
             .json().await?;
 
         // Create LLM with the server information
-        let mut llm_options = options.unwrap_or_default();
-        llm_options = llm_options
+        let llm_options = options.unwrap_or_default();
+        llm_options
             .with_server_url(
                 format!(
                     "http://{}:{}",
@@ -107,7 +107,7 @@ impl ModelManagerInterface for ModelManagerClient {
                     .to_string()
             );
 
-        let processor = match server_info["model_kind"].as_str() {
+        let _processor = match server_info["model_kind"].as_str() {
             Some("LLaMA") => llamacpp_process_stream,
             Some("Qwen") => qwen_process_stream,
             _ => llamacpp_process_stream, // default

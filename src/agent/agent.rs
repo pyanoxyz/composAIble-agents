@@ -5,7 +5,10 @@ use super::agent_trait::AgentTrait;
 use tokio_stream::StreamExt;
 use crate::tools::Tool;
 use std::sync::Arc;
-use log::info;
+use colored::Colorize;
+use std::io::Write;
+use std::thread;
+use std::time::Duration;
 
 pub struct Agent {
     pub(crate) system_prompt: Option<String>,
@@ -60,21 +63,72 @@ impl AgentTrait for Agent {
 
             if stream {
                 let mut response_stream = llm.response_stream(user_prompt, system_prompt).await?;
+                let mut is_first_chunk = true;
+
                 while let Some(response) = response_stream.next().await {
                     match response {
                         Ok(bytes) => {
                             let chunk = String::from_utf8_lossy(&bytes).to_string();
-                            print!("{}", chunk); // Stream to the console
+
+                            // Split the chunk into tokens
+                            let mut tokens = Vec::new();
+                            let mut current_token = String::new();
+
+                            for c in chunk.chars() {
+                                if c.is_whitespace() {
+                                    if !current_token.is_empty() {
+                                        tokens.push(current_token.clone());
+                                        current_token.clear();
+                                    }
+                                    tokens.push(c.to_string());
+                                } else if c.is_alphanumeric() || c == '\'' {
+                                    current_token.push(c);
+                                } else {
+                                    if !current_token.is_empty() {
+                                        tokens.push(current_token.clone());
+                                        current_token.clear();
+                                    }
+                                    tokens.push(c.to_string());
+                                }
+                            }
+
+                            if !current_token.is_empty() {
+                                tokens.push(current_token);
+                            }
+
+                            if is_first_chunk {
+                                println!("");
+                                println!("{}", "INFO: ====Response begin====\n".green());
+                                println!("");
+                                is_first_chunk = false;
+                            }
+
+                            // Print and collect each token
+                            for token in tokens {
+                                print!("{}", token);
+                                std::io::stdout().flush().unwrap_or_default();
+                                std::thread::sleep(std::time::Duration::from_millis(50));
+                                output.push_str(&token);
+                            }
+
+                            // print!("{}", chunk); // Stream to the console
                             output.push_str(&chunk); // Collect into buffer
                         }
                         Err(e) => eprintln!("Error streaming response: {}", e),
                     }
                 }
+                if !is_first_chunk {
+                    println!("");
+                    println!("{}", "INFO: ====Response ends====".green());
+                    println!("");
+                }
             } else {
                 let response = llm.response(user_prompt, system_prompt).await?;
                 // Safely extract and convert `response["content"]` to a string
                 if let Some(content) = response.get("content").and_then(|v| v.as_str()) {
+                    println!("");
                     println!("Response: {}", content);
+                    println!("");
                     output.push_str(content); // Append content to output buffer
                 } else {
                     eprintln!("Error: `content` field is missing or not a string in the response");

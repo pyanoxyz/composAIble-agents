@@ -1,0 +1,37 @@
+{
+  "model_config": {
+    "name": "granite",
+    "model_type": "Text",
+    "model_kind": "LLaMa",
+    "model_path": "granite/granite-3.1-2b-instruct-Q4_0.gguf",
+    "model_url": "https://huggingface.co/bartowski/granite-3.1-2b-instruct-GGUF/resolve/main/granite-3.1-2b-instruct-Q4_0.gguf",
+    "download_if_not_exist": true
+  },
+  "memory_config": {
+    "min_ram_gb": 2,
+    "recommended_ram_gb": 16.0,
+    "gpu_memory_gb": 8.0
+  },
+  "prompt_template": {
+    "template": "<<|start_of_role|>system<|end_of_role|>{system_prompt}<|end_of_text|>\n<|start_of_role|>user<|end_of_role|>{user_prompt}<|end_of_text|>\n<|start_of_role|>assistant<|end_of_role|>",
+    "required_keys": ["system_prompt", "user_prompt"]
+  },
+  "defaults": {
+    "temperature": 0.7,
+    "top_p": 0.9,
+    "top_k": 40,
+    "max_tokens": 2048,
+    "repetition_penalty": 1.1
+  },
+  "server_config": {
+    "host": "localhost",
+    "port": 5008,
+    "ctx_size": 8096,
+    "gpu_layers": -1,
+    "batch_size": 512,
+    "num_threads": 8,
+    "use_mmap": true,
+    "use_gpu": true,
+    "extra_args": {}
+  }
+}

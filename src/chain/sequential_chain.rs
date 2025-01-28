@@ -1,9 +1,9 @@
 use std::error::Error as StdError;
-use log::{ info, error };
+use log::{ debug, error, info };
 
 use crate::agent::agent_trait::AgentTrait;
 use std::sync::{ Arc, Mutex };
-
+use colored::Colorize;
 #[derive(Clone)]
 pub struct ExecutionRecord {
     pub agent_name: String,
@@ -43,7 +43,7 @@ impl Chain {
 
     pub fn add_agent(mut self, agent: Arc<Mutex<dyn AgentTrait>>) -> Self {
         self.agents.push(agent);
-        info!("Added agent");
+        debug!("Added agent");
         self
     }
 
@@ -54,7 +54,7 @@ impl Chain {
 
         for agent in &self.agents {
             let mut agent = agent.lock().unwrap();
-            info!("EXECUTING Agent = {:?}", agent.name());
+            info!("Running Agent: {}", agent.name().unwrap().green());
 
             // If we have a previous output, set it as the user prompt for the current agent.
             if let Some(output) = &previous_output {
@@ -63,11 +63,11 @@ impl Chain {
 
             // Get the current user prompt and execute the agent
             let user_input = agent.user_prompt().cloned().unwrap_or_default();
-            info!("agent invoked");
+
             let output = match agent.invoke().await {
                 Ok(output) => {
                     // Process output
-                    previous_output = Some(output.clone());
+                    // previous_output = Some(output.clone());
                     output
                 }
                 Err(e) => {

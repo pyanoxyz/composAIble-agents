@@ -6,13 +6,13 @@ A composable, resource-efficient framework for building AI applications locally 
 
 ## 🌟 Features
 
-- **📚 Local Model Management**: Advanced model lifecycle management with intelligent resource allocation
-- **🔄 Composable Agents**: Build complex AI workflows by chaining multiple agents together
-- **💾 Vector Storage**: Built-in support for efficient vector storage and similarity search using SQLite
-- **🔍 Embeddings**: Integrated text embedding capabilities using state-of-the-art models
-- **🛠 Flexible Tools**: Built-in tools for web scraping, search, and command execution
-- **🌐 Web Interface**: Clean HTTP interface for model management and inference
-- **🧠 Memory Efficient**: Smart memory management for running multiple models
+-   **📚 Local Model Management**: Advanced model lifecycle management with intelligent resource allocation
+-   **🔄 Composable Agents**: Build complex AI workflows by chaining multiple agents together
+-   **💾 Vector Storage**: Built-in support for efficient vector storage and similarity search using SQLite
+-   **🔍 Embeddings**: Integrated text embedding capabilities using state-of-the-art models
+-   **🛠 Flexible Tools**: Built-in tools for web scraping, search, and command execution
+-   **🌐 Web Interface**: Clean HTTP interface for model management and inference
+-   **🧠 Memory Efficient**: Smart memory management for running multiple models
 
 ## 🏗 Architecture
 
@@ -30,18 +30,24 @@ pyano-framework/
 
 ## 🚀 Quick Start
 
-### Installation
+1. Run setup.sh
 
-1. Add Pyano to your Cargo.toml:
-```toml
-[dependencies]
-pyano = "0.1.0"
+```bash
+chmod +x setup.sh
+./setup.sh
 ```
 
 2. Install required system dependencies:
+
 ```bash
 # Install SQLite vector extension
 # Download from https://github.com/asg017/sqlite-vec
+```
+
+3. Run example
+
+```bash
+cargo run --example Research_Questionaire --features=sqlx
 ```
 
 ### Basic Usage
@@ -57,7 +63,7 @@ use pyano::{
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize the model manager
     let model_manager = Arc::new(ModelManager::new());
-    
+
     // Create agents for your workflow
     let agent_1 = Arc::new(Mutex::new(
         AgentBuilder::new()
@@ -71,9 +77,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Create and run a chain
     let mut chain = Chain::new()
         .add_agent(agent_1);
-    
+
     chain.run().await?;
-    
+
     Ok(())
 }
 ```
@@ -117,10 +123,10 @@ let client = ModelManagerClient::new("http://127.0.0.1:8090");
 
 Pyano includes several built-in tools:
 
-- **Web Scraper**: Extract content from websites
-- **DuckDuckGo Search**: Perform web searches
-- **Command Executor**: Execute system commands
-- **Vector Store**: Store and query vector embeddings
+-   **Web Scraper**: Extract content from websites
+-   **DuckDuckGo Search**: Perform web searches
+-   **Command Executor**: Execute system commands
+-   **Vector Store**: Store and query vector embeddings
 
 ## 🤝 Contributing
 
@@ -138,25 +144,26 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 🙏 Acknowledgments
 
-- Built with Rust 🦀
-- Uses SQLite and sqlite-vec for vector storage
-- Inspired by various AI frameworks and tools
+-   Built with Rust 🦀
+-   Uses SQLite and sqlite-vec for vector storage
+-   Inspired by various AI frameworks and tools
 
 ## 📚 Documentation
 
 For detailed documentation and examples, check out:
-- `/docs` directory for usage examples
-- `/examples` directory for sample applications
-- Code documentation with `cargo doc --open`
+
+-   `/docs` directory for usage examples
+-   `/examples` directory for sample applications
+-   Code documentation with `cargo doc --open`
 
 ## 🔮 Future Plans
 
-- [ ] Support for more model types
-- [ ] Support for OpenAI, Anthropic, Together and other Centralised AI providers
-- [ ] Enhanced memory management
-- [ ] Additional vector store backends including Chroma, LanceDB
-- [ ] More built-in tools and agents
-- [ ] Improved documentation and examples
+-   [ ] Support for more model types
+-   [ ] Support for OpenAI, Anthropic, Together and other Centralised AI providers
+-   [ ] Enhanced memory management
+-   [ ] Additional vector store backends including Chroma, LanceDB
+-   [ ] More built-in tools and agents
+-   [ ] Improved documentation and examples
 
 ---
 

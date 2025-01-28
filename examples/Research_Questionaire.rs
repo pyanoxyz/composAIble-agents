@@ -1,4 +1,4 @@
-use std::{ error::Error as StdError };
+use std::error::Error as StdError;
 use pyano::{ agent::agent_builder::AgentBuilder, chain::sequential_chain::Chain, ModelManager };
 use log::{ info, error };
 use std::sync::{ Arc, Mutex };
@@ -9,8 +9,8 @@ use tokio::io::AsyncReadExt;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn StdError>> {
     // Initialize logging
-    std::env::set_var("RUST_LOG", "debug");
-    std::env::set_var("RUST_BACKTRACE", "1");
+    std::env::set_var("RUST_LOG", "info");
+    // std::env::set_var("RUST_BACKTRACE", "1");
 
     env_logger::init();
 
@@ -18,13 +18,13 @@ async fn main() -> Result<(), Box<dyn StdError>> {
 
     let researcher_llm = model_manager
         .clone()
-        .get_llm("DeepSeek-R1", None).await
+        .get_llm("deepseek-R1-7B", None).await
         .map_err(|e| {
             error!("Failed to Get DeepSeek model: {}", e);
             e
         })?;
 
-    researcher_llm.clone().load().await;
+    // researcher_llm.clone().load().await;
 
     let novice_llm = model_manager
         .clone()
@@ -34,7 +34,7 @@ async fn main() -> Result<(), Box<dyn StdError>> {
             e
         })?;
 
-    novice_llm.clone().load().await;
+    // novice_llm.clone().load().await;
 
     let mut file = File::open("examples/DeepSeek_R1.txt").await?;
     let mut paper_content = String::new();
@@ -73,7 +73,7 @@ async fn main() -> Result<(), Box<dyn StdError>> {
     if let Err(e) = chain.run().await {
         eprintln!("Error executing chain: {}", e);
     }
-    model_manager.show_model_details().await;
+    // model_manager.show_model_details().await;
 
     // Access the memory logs
     let logs = chain.memory_logs();

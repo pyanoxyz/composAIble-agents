@@ -40,6 +40,7 @@ sqlx = { version = "0.8.2", default-features = false, features = ["postgres", "s
 sqlite-vec = "0.1.2"
 rusqlite = { version = "0.32.1", features = ["bundled"] }
 pdf = "0.8.0"
+colored = "3.0.0"
 [dev-dependencies]
 tokio-test = "0.4"
 
@@ -47,3 +48,6 @@ tokio-test = "0.4"
 default = []
 sqlite-vec = ["sqlx"]
 sqlx = ["dep:sqlx"]
+
+[lints.rust]
+unused = "allow"

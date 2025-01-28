@@ -1,8 +1,7 @@
 use async_trait::async_trait;
-use libc::option;
-use log::{ error, info, warn };
+use log::{ debug, error, info, warn };
 use tokio::sync::RwLock;
-use super::state::{ self, ModelState };
+use super::state::ModelState;
 
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -16,7 +15,6 @@ use super::process::ModelProcess;
 use super::config_loader::ModelRegistry;
 use super::error::{ ModelError, ModelResult };
 use super::{ ModelConfig, ModelInfo, ModelStatus, ModelType, SystemMemory };
-use crate::llm;
 use crate::llm::llm_builder::LLM;
 use crate::llm::options::LLMHTTPCallOptions;
 use crate::llm::stream_processing::llamacpp_process_stream;
@@ -179,7 +177,7 @@ impl ModelManager {
         let mut process = ModelProcess::new(state);
         match process.start().await {
             Ok(_) => {
-                info!("Successfully started model process: {}", lm_state.config.model_config.name);
+                debug!("Successfully started model process: {}", lm_state.config.model_config.name);
                 models.insert(lm_state.config.model_config.name.clone(), process);
                 self.record_lock_event(
                     &format!("Successfully loaded model {}", lm_state.config.model_config.name)
@@ -296,7 +294,7 @@ impl ModelManager {
             ::new(&format!("{}/{}", model_home, model_path_str))
             .to_path_buf();
         if model_full_path.exists() {
-            info!("Model {} is already present at {}", model_name, model_full_path.display());
+            debug!("Model {} is already present at {}", model_name, model_full_path.display());
         } else {
             let model_path_parts: Vec<&str> = model_path_str.split('/').collect();
             let download_path = model_path_parts.get(0).unwrap_or(&"");
@@ -319,10 +317,10 @@ impl ModelManager {
         let state = ModelState::new(config.clone());
 
         if options.is_none() {
-            info!("Options are None");
+            debug!("Options are None");
         } else {
-            info!("Options are not None");
-            info!("Updating states based of the options");
+            debug!("Options are not None");
+            debug!("Updating states based of the options");
 
             // Print what are the options passed
 
@@ -348,7 +346,7 @@ impl ModelManager {
                         format!("http://localhost:{}", opts.port.unwrap())
                     );
                 }
-                info!("State has beem Updated");
+                debug!("State has been Updated");
             }
         }
         //ToDo update state with the values present in the llm_options
@@ -379,10 +377,14 @@ impl ModelManager {
     }
 
     async fn manage_memory(&self, required_gb: f32) -> ModelResult<()> {
-        info!("Starting memory management for {:.1} GB", required_gb);
-
         // Get initial memory status
         let initial_status = self.system_memory.get_memory_status().await;
+
+        if self.system_memory.has_available_memory(required_gb).await {
+            info!("Sufficient memory available ({:.1} GB required)", required_gb);
+            return Ok(());
+        }
+        info!("Starting memory management for {:.1} GB", required_gb);
         info!(
             "Initial memory status:\n\
              Available: {:.1} GB\n\
@@ -392,12 +394,6 @@ impl ModelManager {
             initial_status.total_gb,
             initial_status.usage_percentage
         );
-
-        if self.system_memory.has_available_memory(required_gb).await {
-            info!("Sufficient memory available ({:.1} GB required)", required_gb);
-            return Ok(());
-        }
-
         // Try to get models lock with detailed diagnostics
         info!("Attempting to acquire models lock for memory management...");
         let models_result = self.acquire_models_lock(
@@ -521,25 +517,25 @@ impl ModelManager {
     // Add lock tracking
     fn record_lock_event(&self, event: &str) {
         let timestamp = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
-        info!("Lock Event [{}]: {}", timestamp, event);
+        debug!("Lock Event [{}]: {}", timestamp, event);
     }
 
     // Add show registry function
 
-    pub fn show_registry(&self) {
+    pub fn show_models(&self) {
         // get_all_models
-        info!("Available models in the registry:");
+        println!("\n\n");
+        println!("Available models: ");
         for (name, config) in self.registry.get_all_configs() {
-            info!("Model Name: {}, Type: {:?}", name, config.model_config.model_type);
+            println!("Model Name: {}, Type: {:?}", name, config.model_config.model_type);
         }
+        println!("\n\n");
     }
 }
 
 #[async_trait]
 impl ModelManagerInterface for ModelManager {
     async fn load_model(&self, state: ModelState) -> ModelResult<()> {
-        // Existing implementation
-        // ToDO need some clarity here
         self.load_model(state).await
     }
 

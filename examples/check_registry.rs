@@ -19,7 +19,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("\nAvailable Models in Registry:");
     println!("---------------------------");
 
-    manager.show_registry();
+    manager.show_models();
     // Print configs from ModelRegistry
     println!("\nFrom ModelRegistry:");
     // Try getting configs for known models

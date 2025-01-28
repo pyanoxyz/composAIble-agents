@@ -1,6 +1,6 @@
 use crate::model::error::ModelError;
 use crate::model::{ ModelManagerInterface, ModelStatus };
-use log::error;
+use log::{ debug, error };
 use super::{ options::LLMHTTPCallOptions, error::LLMError };
 use std::error::Error as StdError; // Importing the correct trait
 use std::pin::Pin;
@@ -9,6 +9,7 @@ use futures::Stream;
 use log::info; // Ensure StreamExt is imported
 use std::sync::Arc;
 use crate::model::state::ModelState;
+use colored::Colorize;
 
 #[derive(Clone)]
 pub struct LLM {
@@ -44,13 +45,14 @@ impl LLM {
             }
             _ => {
                 info!("Loading model: {}", self.state.config.model_config.name);
+                info!("\n");
                 manager.load_model(self.state.clone()).await;
                 // Verify model was loaded successfully
                 match manager.get_model_status(&self.state.config.model_config.name).await.unwrap() {
                     ModelStatus::Running => {
                         info!("Model {} loaded successfully", self.state.config.model_config.name);
                     }
-                    status => {
+                    _status => {
                         error!(
                             "Model {} failed to load properly",
                             self.state.config.model_config.name
@@ -152,7 +154,6 @@ impl LLM {
         Pin<Box<dyn Stream<Item = Result<Bytes, reqwest::Error>> + Send>>,
         Box<dyn StdError + Send + Sync + 'static>
     > {
-        info!("Response stream not wating");
         self.ensure_model_loaded().await?;
 
         let resp = self.prepare_request(prompt_with_context, system_prompt, true).await?;
@@ -180,7 +181,7 @@ impl LLM {
     }
 
     async fn ensure_model_loaded(&self) -> Result<(), Box<dyn StdError + Send + Sync>> {
-        info!("Checking model status");
+        debug!("Checking model status");
         if let (Some(manager), Some(name)) = (&self.model_manager, &self.model_name) {
             let should_load = match manager.get_model_status(name).await {
                 Ok(ModelStatus::Running) => {
@@ -192,7 +193,7 @@ impl LLM {
                     true
                 }
                 Err(ModelError::ModelNotFound(_)) => {
-                    info!("Model {} not found, will attempt to load", name);
+                    debug!("Model {} not loaded, will attempt to load", name);
                     true
                 }
                 Err(e) => {
@@ -202,7 +203,7 @@ impl LLM {
             };
 
             if should_load {
-                info!("Loading model {}", name);
+                info!("Loading model {}", name.blue().bold());
                 manager.load_model_by_name(name).await?;
 
                 // Verify the model loaded successfully

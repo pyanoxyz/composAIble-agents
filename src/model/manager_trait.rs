@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use crate::llm::llm_builder::LLM;
 use super::state::ModelState;
 use crate::llm::options::LLMHTTPCallOptions;
-use super::types::{ ModelConfig, ModelInfo, ModelStatus };
+use super::types::{ ModelInfo, ModelStatus };
 use super::error::ModelResult;
 
 #[async_trait]

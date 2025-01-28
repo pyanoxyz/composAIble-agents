@@ -5,7 +5,7 @@ use serde_json::{ json, Value };
 use sqlx::{ Pool, Row, Sqlite };
 
 use crate::{
-    embedding::{ self, embedder_trait::Embedder },
+    embedding::embedder_trait::Embedder,
     schemas::document::Document,
     vectorstore::{ VecStoreOptions, VectorStore },
 };

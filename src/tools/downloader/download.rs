@@ -1,13 +1,10 @@
 use reqwest::Client;
 use std::fs::File;
-use std::io::{ copy, Write };
+use std::io::Write;
 use std::path::Path;
-use std::env;
-use log::info;
 use tokio::fs::create_dir_all;
 use indicatif::{ ProgressBar, ProgressStyle };
 use futures_util::StreamExt;
-use dotenv::dotenv;
 
 pub async fn download_model_files(
     model_path: &str,

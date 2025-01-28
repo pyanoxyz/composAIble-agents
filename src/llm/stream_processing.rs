@@ -11,6 +11,7 @@ use serde_json::Value;
 
 type StreamResult = Result<Bytes, reqwest::Error>;
 type BoxedStream = Pin<Box<dyn Stream<Item = StreamResult> + Send>>;
+use colored::Colorize;
 
 #[allow(dead_code)]
 #[derive(Debug, Deserialize)]
@@ -79,7 +80,11 @@ async fn process_chunk(chunk_str: &str) -> String {
                             timing_struct.predicted_n,
                             timing_struct.predicted_ms
                         );
-                        info!("Tokens generated per second: {:.2}", tokens_per_second);
+                        println!("");
+                        info!(
+                            "Tokens generated per second: {:.2}",
+                            tokens_per_second.to_string().yellow()
+                        );
                     }
                 }
             }

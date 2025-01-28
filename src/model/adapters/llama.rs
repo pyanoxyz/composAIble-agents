@@ -19,11 +19,23 @@ impl LlamaProcess {
 
     pub async fn getcmd(&mut self) {
         /* ToDO Implement server based on machine type */
-        let mut cmd = if cfg!(target_os = "macos") {
-            Command::new("./src/model/adapters/llama/arm64/llama-server")
-        } else {
-            Command::new("./src/model/adapters/llama/ubuntu/llama-server")
-        };
+        let adapters_dir = get_env_var("ADAPTERS_HOME").unwrap_or(
+            "pyano_home/adapters".to_string()
+        );
+
+        let cmd_path = (
+            if cfg!(target_os = "macos") {
+                if cfg!(target_arch = "aarch64") {
+                    format!("{}/llama/macos/arm64/llama-server", adapters_dir)
+                } else {
+                    format!("{}/llama/macos/x64/llama-server", adapters_dir)
+                }
+            } else {
+                format!("{}/llama/ubuntu/llama-server", adapters_dir)
+            }
+        ).to_string();
+
+        let mut cmd = Command::new(&cmd_path);
 
         let model_path: PathBuf = get_env_var("MODEL_HOME")
             .map(|path| PathBuf::from(path))
