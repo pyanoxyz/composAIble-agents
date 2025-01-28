@@ -13,7 +13,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let manager = Arc::new(ModelManager::new());
 
     // List all models from registry
-    let models = manager.list_models().await?;
+    // let models = manager.list_models().await?;
     let registery: ModelRegistry = ModelRegistry::new();
     //TODO : Add models in listmodels from configs
     println!("\nAvailable Models in Registry:");
@@ -27,10 +27,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         if let Some(config) = registery.get_config(model_name) {
             println!(
                 "Name: {}\nType: {:?}\nKind: {}\nPath: {:?}\nMemory: {:?} GB (min) / {:?} GB (recommended)\nPort: {:?}\n",
-                config.name,
-                config.model_type,
-                config.model_kind,
-                config.model_path,
+                config.model_config.name,
+                config.model_config.model_type,
+                config.model_config.model_kind,
+                config.model_config.model_path,
                 config.memory_config.min_ram_gb,
                 config.memory_config.recommended_ram_gb,
                 config.server_config.port

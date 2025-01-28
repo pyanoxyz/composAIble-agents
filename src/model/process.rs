@@ -1,53 +1,52 @@
-use std::process::{ Child, Command };
+use std::process::Child;
 use std::thread::sleep;
 use std::time::Duration;
-use chrono::{ DateTime, Utc };
-use log::{ info, error };
+use chrono::Utc;
 use tokio::sync::oneshot;
+use log::{ info, error };
 use super::adapters::llama::LlamaProcess;
 use super::{ ModelConfig, ModelStatus };
+use super::state::ModelState;
 use super::error::{ ModelError, ModelResult };
 pub(crate) struct ModelProcess {
-    pub config: ModelConfig,
+    pub state: ModelState,
     pub child: Option<Child>,
-    pub status: ModelStatus,
-    pub last_used: DateTime<Utc>,
     pub shutdown_signal: Option<oneshot::Sender<()>>,
-    pub model_process: Option<LlamaProcess>,
+    pub model_process: Option<Box<LlamaProcess>>,
 }
 
 impl ModelProcess {
-    pub fn new(config: ModelConfig) -> Self {
+    pub fn new(state: ModelState) -> Self {
         Self {
-            config,
+            state,
             child: None,
-            status: ModelStatus::Stopped,
-            last_used: Utc::now(),
             shutdown_signal: None,
             model_process: None,
         }
     }
 
     pub async fn start(&mut self) -> ModelResult<()> {
-        if self.status == ModelStatus::Running {
+        self.state.show_state();
+        if *self.state.status.lock().unwrap() == ModelStatus::Running {
             return Ok(());
         }
-        info!("Starting model {}", self.config.name);
-        self.status = ModelStatus::Loading;
-        self.model_process = Some(LlamaProcess::new(self.config.clone()));
+        info!("Starting model {}", self.state.config.model_config.name);
+        self.state.show_state();
+        *self.state.status.lock().unwrap() = ModelStatus::Loading;
+        self.model_process = Some(Box::new(LlamaProcess::new(self.state.clone())));
         self.model_process.as_mut().unwrap().getcmd().await;
-        let mut cmd = self.model_process.as_mut().unwrap().cmd.as_mut().unwrap();
+        let cmd = self.model_process.as_mut().unwrap().cmd.as_mut().unwrap();
         info!("Starting model with command: {:?}", cmd);
         match self.model_process.as_mut().unwrap().cmd.as_mut().unwrap().spawn() {
             Ok(child) => {
                 sleep(Duration::from_secs(10));
                 self.child = Some(child);
-                self.status = ModelStatus::Running;
-                self.last_used = Utc::now();
+                *self.state.status.lock().unwrap() = ModelStatus::Running;
+                *self.state.last_used.lock().unwrap() = Utc::now();
                 Ok(())
             }
             Err(e) => {
-                self.status = ModelStatus::Error(e.to_string());
+                *self.state.status.lock().unwrap() = ModelStatus::Error(e.to_string());
                 Err(ModelError::ProcessError(e.to_string()))
             }
         }
@@ -77,7 +76,7 @@ impl ModelProcess {
             }
         }
 
-        self.status = ModelStatus::Stopped;
+        *self.state.status.lock().unwrap() = ModelStatus::Stopped;
         self.child = None;
 
         Ok(())

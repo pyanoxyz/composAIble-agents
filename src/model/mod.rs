@@ -9,6 +9,7 @@ pub mod system_memory;
 pub mod manager_trait;
 pub mod adapters;
 pub mod utils;
+pub mod state;
 
 mod client;
 mod server;

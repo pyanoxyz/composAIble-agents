@@ -5,6 +5,7 @@ use super::agent_trait::AgentTrait;
 use tokio_stream::StreamExt;
 use crate::tools::Tool;
 use std::sync::Arc;
+use log::info;
 
 pub struct Agent {
     pub(crate) system_prompt: Option<String>,

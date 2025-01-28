@@ -1,13 +1,12 @@
-use std::{ collections::HashMap, path::PathBuf, env };
-use log::{ info, warn };
-
+use std::collections::HashMap;
+use log::info;
 use crate::model::utils::get_env_var;
 
 use super::{
     ModelConfig,
     ModelDefaults,
     ModelMemoryConfig,
-    ModelType,
+    ModelSpecificConfig,
     PromptTemplate,
     ServerConfig,
 };
@@ -286,10 +285,11 @@ impl ModelRegistry {
 
     fn load_configs_from_json() -> HashMap<String, ModelConfig> {
         let mut configs = HashMap::new();
-        let config_dir = get_env_var("MODEL_CONFIG_DIR").unwrap_or("pyano_home/configs".to_string());
+        let config_dir = get_env_var("MODEL_CONFIG_DIR").unwrap_or(
+            "pyano_home/configs".to_string()
+        );
 
         info!("Loading model configurations from {}", config_dir);
-
 
         for entry in fs::read_dir(&config_dir).expect("Failed to read config directory") {
             let path = entry.expect("Failed to read entry").path();
@@ -303,11 +303,14 @@ impl ModelRegistry {
                 info!("Parsed JSON structure: {:#?}", json);
 
                 // Extract base configurations
+                let model_config: ModelSpecificConfig = json
+                    .get("model_config")
+                    .and_then(|v| serde_json::from_value::<ModelSpecificConfig>(v.clone()).ok())
+                    .expect("Model config is required");
                 let memory_config = json
                     .get("memory_config")
                     .and_then(|v| serde_json::from_value::<ModelMemoryConfig>(v.clone()).ok())
                     .expect("Memory config is required");
-
                 let prompt_template = json
                     .get("prompt_template")
                     .and_then(|v| serde_json::from_value::<PromptTemplate>(v.clone()).ok())
@@ -324,39 +327,22 @@ impl ModelRegistry {
                     .expect("Server config is required");
 
                 // Get model details directly
-                let models = json.get("models").expect("Models section is required");
-                info!("Models section: {:#?}", models);
 
-                // Process each model in the models section
-                if let Some(model_obj) = models.as_object() {
-                    for (name, details) in model_obj {
-                        info!("Processing model: {}", name);
+                let name = model_config.name.clone();
 
-                        let config = ModelConfig {
-                            name: name.to_string(),
-                            model_type: ModelType::Text,
-                            model_kind: details["model_kind"]
-                                .as_str()
-                                .expect("model_kind is required")
-                                .to_string(),
-                            model_path: PathBuf::from(
-                                details["model_path"].as_str().expect("model_path is required")
-                            ),
-                            model_url: details["model_url"].as_str().map(|s| s.to_string()),
-                            download_if_not_exist: details["download_if_not_exist"]
-                                .as_bool()
-                                .unwrap_or(false),
-                            memory_config: memory_config.clone(),
-                            prompt_template: prompt_template.clone(),
-                            defaults: defaults.clone(),
-                            server_config: server_config.clone(),
-                        };
+                info!("Processing model: {}", name);
 
-                        info!("Adding model to registry: {}", name);
-                        configs.insert(name.to_string(), config);
-                        info!("Loaded configuration for model: {}", name);
-                    }
-                }
+                let config = ModelConfig {
+                    model_config: model_config.clone(),
+                    memory_config: memory_config.clone(),
+                    prompt_template: prompt_template.clone(),
+                    defaults: defaults.clone(),
+                    server_config: server_config.clone(),
+                };
+
+                info!("Adding model to registry: {}", name);
+                configs.insert(name.to_string(), config);
+                info!("Loaded configuration for model: {}", name);
             }
         }
 

@@ -1,6 +1,6 @@
 use crate::model::error::ModelError;
 use crate::model::{ ModelManagerInterface, ModelStatus };
-
+use log::error;
 use super::{ options::LLMHTTPCallOptions, error::LLMError };
 use std::error::Error as StdError; // Importing the correct trait
 use std::pin::Pin;
@@ -8,9 +8,11 @@ use bytes::Bytes;
 use futures::Stream;
 use log::info; // Ensure StreamExt is imported
 use std::sync::Arc;
+use crate::model::state::ModelState;
 
 #[derive(Clone)]
 pub struct LLM {
+    state: ModelState,
     client: reqwest::Client,
     options: LLMHTTPCallOptions,
     process_response: Option<
@@ -32,13 +34,40 @@ impl LLM {
         LLMBuilder::default()
     }
 
+    pub async fn load(self) {
+        let manager = self.model_manager.unwrap();
+        // Load the model
+        let model_status = manager.get_model_status(&self.state.config.model_config.name).await;
+        match model_status {
+            Ok(ModelStatus::Running) => {
+                info!("Model {} is already running", self.state.config.model_config.name);
+            }
+            _ => {
+                info!("Loading model: {}", self.state.config.model_config.name);
+                manager.load_model(self.state.clone()).await;
+                // Verify model was loaded successfully
+                match manager.get_model_status(&self.state.config.model_config.name).await.unwrap() {
+                    ModelStatus::Running => {
+                        info!("Model {} loaded successfully", self.state.config.model_config.name);
+                    }
+                    status => {
+                        error!(
+                            "Model {} failed to load properly",
+                            self.state.config.model_config.name
+                        );
+                    }
+                }
+            }
+        }
+    }
+
     async fn prepare_request(
         &self,
         prompt_with_context: &str,
         system_prompt: &str,
         stream: bool
     ) -> Result<reqwest::Response, Box<dyn StdError + Send + Sync + 'static>> {
-        let server_url = self.options.server_url.as_ref().expect("Server URL is missing");
+        let server_url = self.state.server_url.as_ref();
 
         let prompt_template = self.options.prompt_template
             .as_ref()
@@ -99,7 +128,7 @@ impl LLM {
         }
 
         let resp = self.client
-            .post(&format!("{}/completion", server_url))
+            .post(&format!("{}/completion", server_url.lock().unwrap().as_ref().unwrap()))
             .json(&serde_json::Value::Object(json_payload))
             .send().await
             .map_err(|e| LLMError::RequestFailed(e.to_string()))?
@@ -201,6 +230,7 @@ impl LLM {
 }
 
 pub struct LLMBuilder {
+    state: ModelState,
     options: LLMHTTPCallOptions,
     process_response: Option<
         Arc<
@@ -220,6 +250,7 @@ pub struct LLMBuilder {
 impl Default for LLMBuilder {
     fn default() -> Self {
         LLMBuilder {
+            state: ModelState::default(),
             options: LLMHTTPCallOptions::new(),
             process_response: None, // Default to no custom processing
             auto_load: false,
@@ -239,6 +270,11 @@ impl LLMBuilder {
         self.model_manager = Some(manager);
         self.model_name = Some(model_name);
         self.auto_load = auto_load;
+        self
+    }
+
+    pub fn with_state(mut self, state: ModelState) -> Self {
+        self.state = state;
         self
     }
 
@@ -262,6 +298,7 @@ impl LLMBuilder {
 
     pub fn build(self) -> LLM {
         LLM {
+            state: self.state,
             client: reqwest::Client::new(),
             options: self.options.build(),
             process_response: self.process_response,
